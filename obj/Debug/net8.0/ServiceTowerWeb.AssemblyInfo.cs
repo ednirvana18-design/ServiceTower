@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ServiceTowerWeb")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+c0725f50160d25d756cb6753bb1cd43295b51734")]
 [assembly: System.Reflection.AssemblyProductAttribute("ServiceTowerWeb")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ServiceTowerWeb")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
