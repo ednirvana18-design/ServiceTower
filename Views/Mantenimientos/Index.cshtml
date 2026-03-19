@@ -1,0 +1,150 @@
+﻿@model List<ServiceTowerWeb.Models.Mantenimiento>
+
+@{
+    var orden = Context.Request.Query["orden"].ToString();
+}
+
+<div class="container mt-4">
+
+    <h2 class="mb-4">📊 ServiceTower - Consulta de Mantenimientos</h2>
+
+    <!-- CONTADOR -->
+    <div class="row mb-3">
+        <div class="col-md-3">
+            <div class="card p-3 text-center shadow-sm">
+                <h4>@Model.Count()</h4>
+                <small>Total servicios</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- BUSCADOR -->
+    <div class="card shadow-sm p-3 mb-4">
+        <form method="get">
+            <div class="row g-2">
+                <div class="col-md-4">
+                    <input type="text" name="orden" class="form-control"
+                           placeholder="Orden de servicio..." value="@orden" />
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">Buscar</button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- BOTONES CUANDO HAY FILTRO -->
+    @if (!string.IsNullOrEmpty(orden))
+    {
+        <div class="mb-3">
+
+            <a href="/Mantenimientos?orden=@orden"
+               class="btn btn-outline-secondary">
+                🔗 Compartir resultado
+            </a>
+
+            <a href="/Mantenimientos/GenerarPdf?orden=@orden"
+               class="btn btn-danger">
+                📄 Descargar PDF
+            </a>
+
+        </div>
+    }
+
+    <!-- RESULTADOS -->
+    @foreach (var item in Model)
+    {
+        <div class="card shadow-sm mb-4">
+
+            <!-- HEADER -->
+            <div class="card-header bg-dark text-white">
+                <strong>OS: @item.OrdenServicio</strong>
+            </div>
+
+            <div class="card-body">
+
+                <!-- ESTATUS -->
+                @if (item.Comentarios == "MTTO OK")
+                {
+                    <div class="alert alert-success">✅ Equipo en buen estado</div>
+                }
+                else
+                {
+                    <div class="alert alert-danger">⚠️ Requiere atención</div>
+                }
+
+                <div class="row">
+
+                    <!-- IZQUIERDA -->
+                    <div class="col-md-4">
+                        <h6 class="text-primary">📌 Información</h6>
+                        <p><b>Modelo:</b> @item.Modelo</p>
+                        <p><b>Serie:</b> @item.Serie</p>
+
+                        <hr />
+
+                        <h6 class="text-warning">📍 Ubicación</h6>
+                        <p><b>Área:</b> @item.Area</p>
+                    </div>
+
+                    <!-- CENTRO -->
+                    <div class="col-md-4">
+                        <h6 class="text-danger">🛠 Diagnóstico</h6>
+
+                        <p>
+                            <b>Estatus:</b><br />
+
+                            @if (item.Comentarios == "MTTO OK")
+                            {
+                                <span class="badge bg-success">MTTO OK</span>
+                            }
+                            else if (!string.IsNullOrEmpty(item.Comentarios) && item.Comentarios.Contains("dañado"))
+                            {
+                                <span class="badge bg-danger">@item.Comentarios</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">@item.Comentarios</span>
+                            }
+                        </p>
+
+                        <p><b>Detalle:</b><br /> @item.Comentarios</p>
+                    </div>
+
+                    <!-- DERECHA -->
+                    <div class="col-md-4 text-center">
+
+                        <h6 class="text-muted">📷 Evidencias</h6>
+
+                        <div class="d-flex flex-wrap justify-content-center">
+
+                            @if (!string.IsNullOrEmpty(item.FotoAntesUrl))
+                            {
+                                <a href="@item.FotoAntesUrl" target="_blank">
+                                    <img src="@item.FotoAntesUrl"
+                                         class="img-thumbnail m-1"
+                                         style="width:140px; height:100px; object-fit:cover;" />
+                                </a>
+                            }
+
+                            @if (!string.IsNullOrEmpty(item.FotoDespuesUrl))
+                            {
+                                <a href="@item.FotoDespuesUrl" target="_blank">
+                                    <img src="@item.FotoDespuesUrl"
+                                         class="img-thumbnail m-1"
+                                         style="width:140px; height:100px; object-fit:cover;" />
+                                </a>
+                            }
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+    }
+
+</div>
