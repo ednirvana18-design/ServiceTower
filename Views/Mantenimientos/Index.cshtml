@@ -1,150 +1,261 @@
 ﻿@model List<ServiceTowerWeb.Models.Mantenimiento>
-
 @{
-    var orden = Context.Request.Query["orden"].ToString();
+    var orden = ViewBag.Orden; // Captura lo que el usuario escribió en el buscador
+    var esCliente = ViewBag.EsCliente == true;
 }
 
-<div class="container mt-4">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
-    <h2 class="mb-4">📊 ServiceTower - Consulta de Mantenimientos</h2>
+<style>
+    body {
+        background-color: #f8fafc;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
 
-    <!-- CONTADOR -->
-    <div class="row mb-3">
-        <div class="col-md-3">
-            <div class="card p-3 text-center shadow-sm">
-                <h4>@Model.Count()</h4>
-                <small>Total servicios</small>
-            </div>
+    .card-mantenimiento {
+        border: none;
+        border-radius: 20px;
+        border-left: 8px solid #0056b3;
+        background: #ffffff;
+        margin-bottom: 25px;
+        transition: 0.3s;
+    }
+
+        .card-mantenimiento:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+        }
+
+    .img-box {
+        width: 160px;
+        height: 120px;
+        object-fit: cover;
+        border-radius: 12px;
+        transition: 0.4s ease;
+        cursor: zoom-in;
+        border: 3px solid #fff;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+
+        .img-box:hover {
+            transform: scale(3.5);
+            z-index: 1000;
+            position: relative;
+        }
+
+    .label-header {
+        color: #94a3b8;
+        font-size: 0.7rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        margin-bottom: 2px;
+        display: block;
+    }
+
+    .value-text {
+        color: #1e293b;
+        font-weight: 600;
+        font-size: 0.95rem;
+        display: block;
+        margin-bottom: 12px;
+    }
+
+    .value-highlight {
+        color: #0056b3;
+        font-weight: 700;
+        font-size: 1.1rem;
+    }
+
+    .logout-container {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        z-index: 1001;
+    }
+
+    .btn-logout {
+        background-color: #1e293b;
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 50px;
+        font-weight: 600;
+        text-decoration: none;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+        .btn-logout:hover {
+            background-color: #d32f2f;
+            color: white;
+        }
+</style>
+
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-end mb-5">
+        <div>
+            <h1 class="fw-bold text-dark mb-0">IRASA <span class="text-primary">FieldService</span></h1>
+            <p class="text-muted">Reporte digital de mantenimiento preventivo y correctivo.</p>
+        </div>
+
+        <div class="d-flex gap-2">
+            @* LOGICA DE VISIBILIDAD: Solo si hay un filtro aplicado y hay resultados *@
+            @if (!string.IsNullOrEmpty(orden) && Model != null && Model.Any())
+            {
+                if (!esCliente)
+                {
+                    <button onclick="copiarLink('@orden')" class="btn btn-outline-primary rounded-pill px-4 fw-bold">
+                        <i class="fas fa-share-alt me-2"></i>Link Cliente
+                    </button>
+                }
+
+                @* Botón CSV Centrado *@
+                <a href="javascript:void(0);"
+                   onclick="abrirVentanaCentrada('@Url.Action("Descargar", "Export", new { orden = orden, tipo = "csv" })', 'DescargaCSV', 450, 400)"
+                   class="btn btn-success rounded-pill px-4 fw-bold shadow">
+                    <i class="fas fa-file-csv me-2"></i>Descargar CSV
+                </a>
+
+                @* Botón PDF Centrado *@
+                <a href="javascript:void(0);"
+                   onclick="abrirVentanaCentrada('@Url.Action("Descargar", "Export", new { orden = orden, tipo = "pdf" })', 'DescargaPDF', 450, 400)"
+                   class="btn btn-danger rounded-pill px-4 fw-bold shadow">
+                    <i class="fas fa-file-pdf me-2"></i>Descargar PDF
+                </a>
+            }
         </div>
     </div>
 
-    <!-- BUSCADOR -->
-    <div class="card shadow-sm p-3 mb-4">
-        <form method="get">
-            <div class="row g-2">
-                <div class="col-md-4">
-                    <input type="text" name="orden" class="form-control"
-                           placeholder="Orden de servicio..." value="@orden" />
-                </div>
-                <div class="col-md-2">
-                    <button type="submit" class="btn btn-primary w-100">Buscar</button>
-                </div>
-            </div>
-        </form>
-    </div>
-
-    <!-- BOTONES CUANDO HAY FILTRO -->
-    @if (!string.IsNullOrEmpty(orden))
+    @if (!esCliente)
     {
-        <div class="mb-3">
-
-            <a href="/Mantenimientos?orden=@orden"
-               class="btn btn-outline-secondary">
-                🔗 Compartir resultado
-            </a>
-
-            <a href="/Mantenimientos/GenerarPdf?orden=@orden"
-               class="btn btn-danger">
-                📄 Descargar PDF
-            </a>
-
+        <div class="card border-0 shadow-sm mb-5" style="border-radius: 20px;">
+            <div class="card-body p-4">
+                <form method="get" action="@Url.Action("Index", "Mantenimientos")" class="row g-3">
+                    <div class="col-md-8">
+                        <input type="text" name="orden" class="form-control form-control-lg border-0 bg-light"
+                               placeholder="Buscar por Orden, Serie o Cliente..." value="@orden">
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-primary btn-lg w-100 rounded-3">
+                            <i class="fas fa-search me-2"></i>Buscar
+                        </button>
+                    </div>
+                    <div class="col-md-2">
+                        @* Botón Limpiar: Refresca el Index sin parámetros *@
+                        <a href="@Url.Action("Index", "Mantenimientos")" class="btn btn-outline-secondary btn-lg w-100 rounded-3">
+                            <i class="fas fa-eraser me-2"></i>Limpiar
+                        </a>
+                    </div>
+                </form>
+            </div>
         </div>
     }
 
-    <!-- RESULTADOS -->
-    @foreach (var item in Model)
-    {
-        <div class="card shadow-sm mb-4">
+    <div class="row">
+        @if (Model != null && Model.Any())
+        {
+            @foreach (var item in Model)
+            {
+                var ok = item.Comentarios?.ToUpper().Contains("OK") == true;
+                <div class="col-12">
+                    <div class="card card-mantenimiento shadow-sm">
+                        <div class="card-body p-4">
+                            <div class="row align-items-start">
+                                <div class="col-md-3 border-end">
+                                    <span class="label-header">Orden / Cliente</span>
+                                    <span class="badge bg-dark mb-1">#@item.OrdenServicio</span>
+                                    <span class="value-text text-primary">@item.Cliente</span>
 
-            <!-- HEADER -->
-            <div class="card-header bg-dark text-white">
-                <strong>OS: @item.OrdenServicio</strong>
-            </div>
+                                    <span class="label-header">Técnico Responsable</span>
+                                    <span class="value-text">@item.Tecnico</span>
 
-            <div class="card-body">
+                                    <hr />
 
-                <!-- ESTATUS -->
-                @if (item.Comentarios == "MTTO OK")
-                {
-                    <div class="alert alert-success">✅ Equipo en buen estado</div>
-                }
-                else
-                {
-                    <div class="alert alert-danger">⚠️ Requiere atención</div>
-                }
+                                    <span class="label-header">Área / Ubicación</span>
+                                    <span class="value-text value-highlight">@item.Area</span>
+                                    <span class="value-text" style="font-size: 0.85rem;">@item.Ubicacion</span>
 
-                <div class="row">
+                                    <span class="label-header">Modelo / Serie / Res.</span>
+                                    <span class="value-text">@item.Modelo | <span class="text-primary">@item.Serie</span> | @item.Resolucion</span>
+                                </div>
 
-                    <!-- IZQUIERDA -->
-                    <div class="col-md-4">
-                        <h6 class="text-primary">📌 Información</h6>
-                        <p><b>Modelo:</b> @item.Modelo</p>
-                        <p><b>Serie:</b> @item.Serie</p>
+                                <div class="col-md-5 px-4">
+                                    <span class="label-header">Diagnóstico y Comentarios</span>
+                                    <p class="text-dark fw-medium mt-2" style="font-size: 1.1rem;">@item.Comentarios</p>
 
-                        <hr />
+                                    <div class="row mt-3">
+                                        <div class="col-6">
+                                            <span class="label-header">Uso Etiqueta (Zebra)</span>
+                                            <span class="value-text">@(string.IsNullOrEmpty(item.UsoEtiqueta) ? "N/A" : item.UsoEtiqueta)</span>
+                                        </div>
+                                        <div class="col-6">
+                                            <span class="label-header">Uso Ribbon (Zebra)</span>
+                                            <span class="value-text">@(string.IsNullOrEmpty(item.UsoRibbon) ? "N/A" : item.UsoRibbon)</span>
+                                        </div>
+                                    </div>
 
-                        <h6 class="text-warning">📍 Ubicación</h6>
-                        <p><b>Área:</b> @item.Area</p>
-                    </div>
+                                    <div class="mt-4">
+                                        <span class="badge px-3 py-2 rounded-pill" style="background-color: @(ok ? "#dcfce7" : "#fee2e2"); color: @(ok ? "#166534" : "#991b1b");">
+                                            <i class="fas @(ok ? "fa-check-circle" : "fa-tools") me-1"></i> @(ok ? "EQUIPO OPERATIVO" : "MANTENIMIENTO REQUERIDO")
+                                        </span>
+                                    </div>
+                                </div>
 
-                    <!-- CENTRO -->
-                    <div class="col-md-4">
-                        <h6 class="text-danger">🛠 Diagnóstico</h6>
-
-                        <p>
-                            <b>Estatus:</b><br />
-
-                            @if (item.Comentarios == "MTTO OK")
-                            {
-                                <span class="badge bg-success">MTTO OK</span>
-                            }
-                            else if (!string.IsNullOrEmpty(item.Comentarios) && item.Comentarios.Contains("dañado"))
-                            {
-                                <span class="badge bg-danger">@item.Comentarios</span>
-                            }
-                            else
-                            {
-                                <span class="badge bg-secondary">@item.Comentarios</span>
-                            }
-                        </p>
-
-                        <p><b>Detalle:</b><br /> @item.Comentarios</p>
-                    </div>
-
-                    <!-- DERECHA -->
-                    <div class="col-md-4 text-center">
-
-                        <h6 class="text-muted">📷 Evidencias</h6>
-
-                        <div class="d-flex flex-wrap justify-content-center">
-
-                            @if (!string.IsNullOrEmpty(item.FotoAntesUrl))
-                            {
-                                <a href="@item.FotoAntesUrl" target="_blank">
-                                    <img src="@item.FotoAntesUrl"
-                                         class="img-thumbnail m-1"
-                                         style="width:140px; height:100px; object-fit:cover;" />
-                                </a>
-                            }
-
-                            @if (!string.IsNullOrEmpty(item.FotoDespuesUrl))
-                            {
-                                <a href="@item.FotoDespuesUrl" target="_blank">
-                                    <img src="@item.FotoDespuesUrl"
-                                         class="img-thumbnail m-1"
-                                         style="width:140px; height:100px; object-fit:cover;" />
-                                </a>
-                            }
-
+                                <div class="col-md-4 text-center">
+                                    <div class="d-flex justify-content-center gap-3">
+                                        <div><img src="@item.FotoAntesUrl" class="img-box"><div class="label-header mt-2">Antes</div></div>
+                                        <div><img src="@item.FotoDespuesUrl" class="img-box"><div class="label-header mt-2">Después</div></div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-
                     </div>
-
                 </div>
-
+            }
+        }
+        else
+        {
+            <div class="col-12 text-center py-5">
+                <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                <h3 class="text-muted">Realice una búsqueda para ver los reportes.</h3>
             </div>
-
-        </div>
-    }
-
+        }
+    </div>
 </div>
+
+@if (!esCliente)
+{
+    <div class="logout-container">
+        <a href="@Url.Action("Logout", "Account")" class="btn-logout">
+            <i class="fas fa-power-off"></i>
+            <span>Cerrar Sesión</span>
+        </a>
+    </div>
+}
+
+<script>
+    function copiarLink(o) {
+        if (!o) return;
+        const url = window.location.origin + '@Url.Action("Compartir", "Mantenimientos")?orden=' + encodeURIComponent(o);
+
+        navigator.clipboard.writeText(url).then(() => {
+            alert('✅ Enlace copiado para el cliente.');
+        }).catch(err => {
+            console.error('Error al copiar: ', err);
+        });
+    }
+</script>
+
+<script>
+    function abrirVentanaCentrada(url, titulo, w, h) {
+        // Calculamos la mitad de la pantalla
+        var left = (screen.width / 2) - (w / 2);
+        var top = (screen.height / 2) - (h / 2);
+
+        // Abrimos la ventana con las coordenadas calculadas
+        return window.open(url, titulo, 'toolbar=no, location=no, directories=no, status=no, menubar=no, scrollbars=no, resizable=no, copyhistory=no, width=' + w + ', height=' + h + ', top=' + top + ', left=' + left);
+    }
+</script>

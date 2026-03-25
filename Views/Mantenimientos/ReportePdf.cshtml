@@ -1,0 +1,236 @@
+﻿@model List<ServiceTowerWeb.Models.Mantenimiento>
+@{
+    Layout = null;
+    var listaSegura = Model ?? new List<ServiceTowerWeb.Models.Mantenimiento>();
+    var ordenBusqueda = ViewData["Orden"] ?? "General";
+    string rootPath = ViewData["RootPath"]?.ToString() ?? "";
+    string logoPath = System.IO.Path.Combine(rootPath, "images", "logo_irasa.png");
+}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <title>Reporte Field Service IRASA</title>
+    <style>
+        body {
+            font-family: 'Helvetica', 'Arial', sans-serif;
+            color: #1e293b;
+            margin: 0;
+            padding: 10px;
+            background-color: #ffffff;
+        }
+
+        /* --- CABECERA PRINCIPAL --- */
+        .header {
+            border-bottom: 4px solid #0056b3;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+        }
+
+        .logo {
+            width: 200px;
+            float: left;
+        }
+
+        .info-reporte {
+            float: right;
+            text-align: right;
+        }
+
+        .title-brand {
+            color: #0056b3;
+            font-size: 26px;
+            font-weight: bold;
+            margin: 0;
+        }
+
+        .subtitle-brand {
+            margin: 2px 0;
+            font-size: 12px;
+            color: #64748b;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .clear {
+            clear: both;
+        }
+
+        /* --- CARDS DE CADA EQUIPO --- */
+        .card-equipo {
+            border: 1px solid #cbd5e1;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 20px;
+            page-break-inside: avoid;
+        }
+
+        .grid-equipo {
+            display: table;
+            width: 100%;
+        }
+
+        .col {
+            display: table-cell;
+            vertical-align: top;
+        }
+
+        .col-info {
+            width: 38%;
+            border-right: 1px solid #e2e8f0;
+            padding-right: 15px;
+        }
+
+        .col-diag {
+            width: 34%;
+            padding: 0 15px;
+        }
+
+        .col-fotos {
+            width: 28%;
+            text-align: center;
+        }
+
+        .label-card {
+            font-weight: 800;
+            font-size: 8px;
+            color: #94a3b8;
+            text-transform: uppercase;
+            margin-bottom: 2px;
+        }
+
+        .value-card {
+            font-size: 11px;
+            color: #1e293b;
+            margin-bottom: 10px;
+            font-weight: 500;
+            line-height: 1.2;
+        }
+
+        /* --- FOTOS --- */
+        .foto-container {
+            display: inline-block;
+            width: 48%;
+            text-align: center;
+        }
+
+            .foto-container img {
+                width: 100px;
+                height: 85px;
+                border-radius: 6px;
+                border: 1px solid #e2e8f0;
+                object-fit: cover;
+            }
+
+        /* --- ESTATUS --- */
+        .status-badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 9px;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        .ok {
+            background-color: #dcfce7;
+            color: #166534;
+        }
+
+        .req {
+            background-color: #fee2e2;
+            color: #991b1b;
+        }
+
+        .footer-pdf {
+            text-align: center;
+            font-size: 9px;
+            color: #94a3b8;
+            margin-top: 20px;
+            border-top: 1px solid #eee;
+            padding-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <img src="@logoPath" class="logo" />
+        <div class="info-reporte">
+            <p class="title-brand">FieldService</p>
+            <p class="subtitle-brand">Reporte Técnico Digital</p>
+            <p style="margin:0; font-size: 11px;"><b>Filtro:</b> #@ordenBusqueda</p>
+            <p style="margin:0; font-size: 11px;"><b>Fecha:</b> @DateTime.Now.ToString("dd/MM/yyyy")</p>
+        </div>
+        <div class="clear"></div>
+    </div>
+
+    @if (listaSegura.Any())
+    {
+        foreach (var item in listaSegura)
+        {
+            var esOk = item.Comentarios?.ToUpper().Contains("OK") == true;
+
+            <div class="card-equipo">
+                <div class="grid-equipo">
+                    <div class="col col-info">
+                        <div class="label-card">Cliente</div>
+                        <div class="value-card" style="color: #0056b3; font-weight: bold;">@item.Cliente</div>
+
+                        <div class="label-card">Técnico Responsable</div>
+                        <div class="value-card">@item.Tecnico</div>
+
+                        <div style="border-top: 1px dashed #cbd5e1; margin-bottom: 10px;"></div>
+
+                        <div class="label-card">ID Equipo / S/N</div>
+                        <div class="value-card">
+                            <span style="color: #d32f2f; font-weight: bold;">#@item.IdEquipo</span> | @item.Serie
+                        </div>
+
+                        <div class="label-card">Modelo / Área</div>
+                        <div class="value-card">@item.Modelo <br /> @item.Area (@item.Ubicacion)</div>
+                    </div>
+
+                    <div class="col col-diag">
+                        <div class="label-card">Diagnóstico y Notas</div>
+                        <div class="value-card" style="font-size: 10px; min-height: 50px;">@item.Comentarios</div>
+
+                        <div style="font-size: 9px; color: #64748b; background: #f8fafc; padding: 5px; border-radius: 4px;">
+                            <b>Insumos Zebra:</b><br />
+                            Et: @(item.UsoEtiqueta ?? "N/A") | Rb: @(item.UsoRibbon ?? "N/A")
+                        </div>
+
+                        <div class="status-badge @(esOk ? "ok" : "req")">
+                            @(esOk ? "● OPERATIVO" : "● MANTENIMIENTO REQUERIDO")
+                        </div>
+                    </div>
+
+                    <div class="col col-fotos">
+                        <div class="label-card" style="margin-bottom: 5px;">Evidencias</div>
+                        <div class="foto-container">
+                            <img src="@item.FotoAntesUrl" />
+                            <div class="label-card" style="font-size: 7px;">Antes</div>
+                        </div>
+                        <div class="foto-container">
+                            <img src="@item.FotoDespuesUrl" />
+                            <div class="label-card" style="font-size: 7px;">Después</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <div style="text-align:center; padding: 50px;">
+            <h3 style="color: #64748b;">No se encontraron registros de mantenimiento.</h3>
+        </div>
+    }
+
+    <div class="footer-pdf">
+        Este documento es un reporte generado automáticamente por el sistema de gestión de IRASA.
+    </div>
+
+</body>
+</html> 
