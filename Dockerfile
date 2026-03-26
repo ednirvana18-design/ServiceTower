@@ -1,17 +1,18 @@
-﻿# Etapa de construcción
+﻿# --- ETAPA 1: CONSTRUCCIÓN ---
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /app
 
+# Copiamos los archivos y publicamos la app
 COPY . ./
 RUN dotnet publish -c Release -o out
 
-# Etapa de ejecución
+# --- ETAPA 2: EJECUCIÓN (LINUX) ---
 FROM mcr.microsoft.com/dotnet/aspnet:8.0
 WORKDIR /app
 
-# --- INICIO DE CORRECCIÓN PARA PDF (Rotativa/wkhtmltopdf) ---
-# Instalamos las librerías gráficas que Linux necesita para "dibujar" el PDF
+# 1. Instalamos las librerías gráficas Y el motor wkhtmltopdf de Linux
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    wkhtmltopdf \
     libgdiplus \
     libx11-6 \
     libc6-dev \
@@ -27,9 +28,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     xfonts-75dpi \
     xfonts-base \
     && rm -rf /var/lib/apt/lists/*
-# --- FIN DE CORRECCIÓN ---
 
+# 2. Copiamos los archivos publicados desde la etapa de build
 COPY --from=build /app/out .
 
-# Asegúrate de que el nombre del .dll sea exactamente este
+# 3. Permisos de ejecución (por si acaso)
+RUN chmod +x /usr/bin/wkhtmltopdf
+
+# 4. Arrancamos la aplicación
 ENTRYPOINT ["dotnet", "ServiceTowerWeb.dll"]

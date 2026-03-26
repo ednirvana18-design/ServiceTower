@@ -41,14 +41,13 @@ public class MantenimientosController : Controller
     {
         try
         {
-            // 1. Traemos la data filtrada (usamos 500 por si la orden es muy grande)
+            // 1. Traemos la data filtrada
             var dataOriginal = await ObtenerDataCompleta(orden, 1, 500);
 
             if (dataOriginal == null || !dataOriginal.Any())
                 return Content("No se encontraron datos para generar el PDF.");
 
-            // 2. IMPORTANTE: Necesitamos las fotos para el PDF. 
-            // Si no las incluyes aquí, el PDF saldrá vacío en la sección de evidencias.
+            // 2. Mapeo de datos (asegurando que las URLs de las fotos pasen al PDF)
             var listaParaPdf = dataOriginal.Select(m => new Mantenimiento
             {
                 IdEquipo = m.IdEquipo,
@@ -62,27 +61,31 @@ public class MantenimientosController : Controller
                 UsoEtiqueta = m.UsoEtiqueta,
                 UsoRibbon = m.UsoRibbon,
                 Comentarios = m.Comentarios,
-                FotoAntesUrl = m.FotoAntesUrl, // ¡No las quites!
-                FotoDespuesUrl = m.FotoDespuesUrl, // ¡No las quites!
+                FotoAntesUrl = m.FotoAntesUrl,
+                FotoDespuesUrl = m.FotoDespuesUrl,
                 Fecha = m.Fecha
             }).ToList();
 
-            // 3. Pasamos datos extra a la vista del PDF (Logo y texto de búsqueda)
+            // 3. Datos extra para la vista
             ViewData["Orden"] = string.IsNullOrEmpty(orden) ? "General" : orden;
             ViewData["RootPath"] = _env.WebRootPath;
 
-            // 4. Configuración de Rotativa
-            return new ViewAsPdf("ReportePdf", listaParaPdf) // Asegúrate que el nombre coincida con tu .cshtml
+            // 4. Configuración de Rotativa PARA RENDER (LINUX)
+            return new ViewAsPdf("ReportePdf", listaParaPdf)
             {
                 FileName = $"Reporte_IRASA_{orden}_{DateTime.Now:ddMMyy}.pdf",
                 PageSize = Rotativa.AspNetCore.Options.Size.A4,
                 PageOrientation = Rotativa.AspNetCore.Options.Orientation.Portrait,
-                CustomSwitches = "--enable-local-file-access" // QUITAMOS --no-images para que se vean las fotos
+                CustomSwitches = "--enable-local-file-access --no-stop-slow-scripts --javascript-delay 1000",
+
+                // --- ESTA LÍNEA ES LA CLAVE PARA QUE FUNCIONE EN RENDER ---
+                WkhtmltopdfPath = "/usr/bin/wkhtmltopdf"
             };
         }
         catch (Exception ex)
         {
-            return Content("Error al generar PDF: " + ex.Message);
+            // Esto nos ayudará a ver el error real en la pantalla si algo falla
+            return Content("Error al generar PDF: " + ex.Message + " | Inner: " + ex.InnerException?.Message);
         }
     }
 
